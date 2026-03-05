@@ -375,41 +375,70 @@ async function sbFetch(path, opts={}) {
 
 function toRow(p) {
   return {
-    address:p.address, url:p.url||null, price:p.price||null, status:p.status,
-    beds:p.beds||null, baths:p.baths||null, living:p.living||null,
-    land:p.land||null, commute:p.commute||null, reno:p.reno,
-    garage:p.parking||null,
-    has_pool: p.pool === 'Yes',
-    agent_name:p.agent1Name||null, agent_agency:p.agentAgency||null,
-    agent_phone:p.agent1Phone||null, agent_email:null,
-    inspection:p.inspection||null, notes:p.notes||null,
-    ai_score:p.aiScore||null, ai_summary:p.aiSummary||null,
-    // Extended fields stored in notes as JSON supplement if no DB columns yet
-    _ext: JSON.stringify({
-      suburb:p.suburb, parking:p.parking, buildingSize:p.buildingSize,
-      pool:p.pool, deck:p.deck, aircon:p.aircon, waterTank:p.waterTank, solar:p.solar,
-      agent1Name:p.agent1Name, agent1Phone:p.agent1Phone,
-      agent2Name:p.agent2Name, agent2Phone:p.agent2Phone,
-    })
+    address:     p.address,
+    url:         p.url||null,
+    price:       p.price||null,
+    status:      p.status,
+    beds:        p.beds||null,
+    baths:       p.baths||null,
+    living:      p.living||null,
+    land:        p.land||null,
+    commute:     p.commute||null,
+    reno:        p.reno||'None',
+    garage:      p.parking||null,
+    has_pool:    p.pool === 'Yes',
+    agent_name:  p.agent1Name||null,
+    agent_agency:p.agentAgency||null,
+    agent_phone: p.agent1Phone||null,
+    agent_email: null,
+    inspection:  p.inspection||null,
+    notes:       p.notes||null,
+    ai_score:    p.aiScore||null,
+    ai_summary:  p.aiSummary||null,
+    suburb:      p.suburb||null,
+    parking:     p.parking||null,
+    building_size: p.buildingSize||null,
+    pool:        p.pool||'Unsure',
+    deck:        p.deck||'Unsure',
+    aircon:      p.aircon||'Unsure',
+    water_tank:  p.waterTank||'Unsure',
+    solar:       p.solar||'Unsure',
+    agent2_name: p.agent2Name||null,
+    agent2_phone:p.agent2Phone||null,
   };
 }
 
 function fromRow(r) {
-  let ext = {};
-  try { ext = JSON.parse(r._ext || '{}'); } catch(e) {}
   return {
-    id:r.id, address:r.address, url:r.url, price:r.price, status:r.status,
-    beds:r.beds, baths:r.baths, living:r.living, land:r.land, commute:r.commute,
-    reno:r.reno, inspection:r.inspection, notes:r.notes,
-    aiScore:r.ai_score, aiSummary:r.ai_summary, addedAt:r.created_at,
-    suburb: ext.suburb||'', parking: ext.parking||r.garage||'',
-    buildingSize: ext.buildingSize||'',
-    pool: ext.pool||(r.has_pool?'Yes':'No'),
-    deck: ext.deck||'Unsure', aircon: ext.aircon||'Unsure',
-    waterTank: ext.waterTank||'Unsure', solar: ext.solar||'Unsure',
-    agentAgency: r.agent_agency||'',
-    agent1Name: ext.agent1Name||r.agent_name||'', agent1Phone: ext.agent1Phone||r.agent_phone||'',
-    agent2Name: ext.agent2Name||'', agent2Phone: ext.agent2Phone||'',
+    id:           r.id,
+    address:      r.address,
+    url:          r.url,
+    price:        r.price,
+    status:       r.status,
+    beds:         r.beds,
+    baths:        r.baths,
+    living:       r.living,
+    land:         r.land,
+    commute:      r.commute,
+    reno:         r.reno,
+    inspection:   r.inspection,
+    notes:        r.notes,
+    aiScore:      r.ai_score,
+    aiSummary:    r.ai_summary,
+    addedAt:      r.created_at,
+    suburb:       r.suburb||'',
+    parking:      r.parking||r.garage||'',
+    buildingSize: r.building_size||'',
+    pool:         r.pool||(r.has_pool?'Yes':'No'),
+    deck:         r.deck||'Unsure',
+    aircon:       r.aircon||'Unsure',
+    waterTank:    r.water_tank||'Unsure',
+    solar:        r.solar||'Unsure',
+    agentAgency:  r.agent_agency||'',
+    agent1Name:   r.agent_name||'',
+    agent1Phone:  r.agent_phone||'',
+    agent2Name:   r.agent2_name||'',
+    agent2Phone:  r.agent2_phone||'',
   };
 }
 
@@ -685,15 +714,11 @@ function showToast(msg) {
 
 // Pre-fill form from Chrome extension URL params
 function prefillFromExtension() {
-  console.log('[PT] prefillFromExtension called');
-  console.log('[PT] full URL:', window.location.href);
   const params = new URLSearchParams(window.location.search);
-  console.log('[PT] from_ext param:', params.get('from_ext'));
-  if (params.get('from_ext') !== '1') { console.log('[PT] no from_ext, bailing'); return; }
+  if (params.get('from_ext') !== '1') return;
   let d = {};
-  try { d = JSON.parse(decodeURIComponent(params.get('data') || '{}')); } catch(e) { console.log('[PT] parse error', e); return; }
-  console.log('[PT] parsed data:', d);
-  if (!d.address && !d.url) { console.log('[PT] no address or url, bailing'); return; }
+  try { d = JSON.parse(decodeURIComponent(params.get('data') || '{}')); } catch(e) { return; }
+  if (!d.address && !d.url) return;
 
   // Store data on window so it survives any timing issues
   window._extPrefillData = d;
