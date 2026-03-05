@@ -241,7 +241,10 @@
     <h2 id="modal-title">Add Property</h2>
     <div class="form-section">
       <div class="section-head">Property Details</div>
-      <div class="field"><label>Address *</label><input id="f-address" placeholder="12 Example St, Suburb QLD 4000"></div>
+      <div class="two-col">
+        <div class="field"><label>Address *</label><input id="f-address" placeholder="12 Example St, Suburb QLD 4000"></div>
+        <div class="field"><label>Suburb</label><input id="f-suburb" placeholder="Eatons Hill"></div>
+      </div>
       <div class="field"><label>Listing URL</label><input id="f-url" placeholder="https://realestate.com.au/property-..."></div>
       <div class="two-col">
         <div class="field"><label>Price / Range</label><input id="f-price" placeholder="$850k–$900k"></div>
@@ -254,35 +257,60 @@
       </div>
     </div>
     <div class="form-section">
-      <div class="section-head">Features</div>
+      <div class="section-head">Size & Layout</div>
       <div class="three-col">
         <div class="field"><label>Bedrooms</label><input id="f-beds" type="number" min="0" placeholder="4"></div>
         <div class="field"><label>Bathrooms</label><input id="f-baths" type="number" min="0" placeholder="2"></div>
-        <div class="field"><label>Living Spaces</label><input id="f-living" type="number" min="0" placeholder="2"></div>
+        <div class="field"><label>Parking Spaces</label><input id="f-parking" type="number" min="0" placeholder="2"></div>
       </div>
-      <div class="two-col">
-        <div class="field"><label>Land Size</label><input id="f-land" placeholder="650m²"></div>
+      <div class="three-col">
+        <div class="field"><label>Land Size</label><input id="f-land" placeholder="2ha"></div>
+        <div class="field"><label>Building Size</label><input id="f-buildingSize" placeholder="231m²"></div>
         <div class="field"><label>Commute (minutes)</label><input id="f-commute" type="number" min="0" placeholder="35"></div>
       </div>
       <div class="two-col">
-        <div class="field"><label>Garage / Parking</label><input id="f-garage" placeholder="2 car garage"></div>
         <div class="field"><label>Renovation Needed</label>
           <select id="f-reno"><option>None</option><option>Cosmetic</option><option>Moderate</option><option>Full</option></select>
         </div>
+        <div class="field"><label>Living Spaces</label><input id="f-living" type="number" min="0" placeholder="2"></div>
       </div>
-      <div class="checkbox-row"><input type="checkbox" id="f-pool"><label for="f-pool">Has a pool</label></div>
+    </div>
+    <div class="form-section">
+      <div class="section-head">Features</div>
+      <div class="three-col">
+        <div class="field"><label>Pool</label>
+          <select id="f-pool"><option>Unsure</option><option>Yes</option><option>No</option></select>
+        </div>
+        <div class="field"><label>Deck / Alfresco</label>
+          <select id="f-deck"><option>Unsure</option><option>Yes</option><option>No</option></select>
+        </div>
+        <div class="field"><label>Air Conditioning</label>
+          <select id="f-aircon"><option>Unsure</option><option>Yes</option><option>No</option></select>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label>Water Tank</label>
+          <select id="f-waterTank"><option>Unsure</option><option>Yes</option><option>No</option></select>
+        </div>
+        <div class="field"><label>Solar Panels</label>
+          <select id="f-solar"><option>Unsure</option><option>Yes</option><option>No</option></select>
+        </div>
+      </div>
     </div>
     <div class="form-section">
       <div class="section-head">Agent Details</div>
       <div class="two-col">
-        <div class="field"><label>Agent Name</label><input id="f-agent-name" placeholder="Jane Smith"></div>
-        <div class="field"><label>Agency</label><input id="f-agent-agency" placeholder="Ray White"></div>
+        <div class="field"><label>Agency</label><input id="f-agent-agency" placeholder="Raine & Horne"></div>
+        <div class="field"><label>Inspection Date / Time</label><input id="f-inspection" placeholder="Sat 10 Aug, 10:30am"></div>
       </div>
       <div class="two-col">
-        <div class="field"><label>Phone</label><input id="f-agent-phone" placeholder="0400 000 000"></div>
-        <div class="field"><label>Email</label><input id="f-agent-email" placeholder="jane@raywhite.com.au"></div>
+        <div class="field"><label>Agent 1 Name</label><input id="f-agent1-name" placeholder="Jane Smith"></div>
+        <div class="field"><label>Agent 1 Phone</label><input id="f-agent1-phone" placeholder="0400 000 000"></div>
       </div>
-      <div class="field"><label>Inspection Date / Time</label><input id="f-inspection" placeholder="Sat 10 Aug, 10:30am"></div>
+      <div class="two-col">
+        <div class="field"><label>Agent 2 Name</label><input id="f-agent2-name" placeholder="John Smith"></div>
+        <div class="field"><label>Agent 2 Phone</label><input id="f-agent2-phone" placeholder="0400 000 000"></div>
+      </div>
     </div>
     <div class="form-section">
       <div class="section-head">Notes</div>
@@ -300,7 +328,7 @@
 <script>
 const SUPABASE_URL = 'https://dyefmczcojrgnlrrstom.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_XFPRysf4Z4fCPnjmpzmDoQ_fvnviMuX';
-const APP_PASSWORD = 'Soxinabox';
+const APP_PASSWORD = 'househunt2025';
 
 const STATUS = {
   'Shortlisted':       {color:'#92400e',bg:'#fef3c7',dot:'#d4831a'},
@@ -319,7 +347,7 @@ function doLogin() {
     sessionStorage.setItem('pt_auth','1');
     document.getElementById('login-screen').style.display='none';
     document.getElementById('app').style.display='block';
-    loadProperties();
+    loadProperties().then(() => prefillFromExtension());
   } else {
     document.getElementById('login-error').style.display='block';
     document.getElementById('login-password').value='';
@@ -348,23 +376,40 @@ async function sbFetch(path, opts={}) {
 function toRow(p) {
   return {
     address:p.address, url:p.url||null, price:p.price||null, status:p.status,
-    beds:p.beds||null, baths:p.baths||null, living:p.living||null, land:p.land||null,
-    commute:p.commute||null, garage:p.garage||null, reno:p.reno, has_pool:p.hasPool||false,
-    agent_name:p.agentName||null, agent_agency:p.agentAgency||null,
-    agent_phone:p.agentPhone||null, agent_email:p.agentEmail||null,
+    beds:p.beds||null, baths:p.baths||null, living:p.living||null,
+    land:p.land||null, commute:p.commute||null, reno:p.reno,
+    garage:p.parking||null,
+    has_pool: p.pool === 'Yes',
+    agent_name:p.agent1Name||null, agent_agency:p.agentAgency||null,
+    agent_phone:p.agent1Phone||null, agent_email:null,
     inspection:p.inspection||null, notes:p.notes||null,
     ai_score:p.aiScore||null, ai_summary:p.aiSummary||null,
+    // Extended fields stored in notes as JSON supplement if no DB columns yet
+    _ext: JSON.stringify({
+      suburb:p.suburb, parking:p.parking, buildingSize:p.buildingSize,
+      pool:p.pool, deck:p.deck, aircon:p.aircon, waterTank:p.waterTank, solar:p.solar,
+      agent1Name:p.agent1Name, agent1Phone:p.agent1Phone,
+      agent2Name:p.agent2Name, agent2Phone:p.agent2Phone,
+    })
   };
 }
 
 function fromRow(r) {
+  let ext = {};
+  try { ext = JSON.parse(r._ext || '{}'); } catch(e) {}
   return {
     id:r.id, address:r.address, url:r.url, price:r.price, status:r.status,
     beds:r.beds, baths:r.baths, living:r.living, land:r.land, commute:r.commute,
-    garage:r.garage, reno:r.reno, hasPool:r.has_pool, agentName:r.agent_name,
-    agentAgency:r.agent_agency, agentPhone:r.agent_phone, agentEmail:r.agent_email,
-    inspection:r.inspection, notes:r.notes, aiScore:r.ai_score, aiSummary:r.ai_summary,
-    addedAt:r.created_at,
+    reno:r.reno, inspection:r.inspection, notes:r.notes,
+    aiScore:r.ai_score, aiSummary:r.ai_summary, addedAt:r.created_at,
+    suburb: ext.suburb||'', parking: ext.parking||r.garage||'',
+    buildingSize: ext.buildingSize||'',
+    pool: ext.pool||(r.has_pool?'Yes':'No'),
+    deck: ext.deck||'Unsure', aircon: ext.aircon||'Unsure',
+    waterTank: ext.waterTank||'Unsure', solar: ext.solar||'Unsure',
+    agentAgency: r.agent_agency||'',
+    agent1Name: ext.agent1Name||r.agent_name||'', agent1Phone: ext.agent1Phone||r.agent_phone||'',
+    agent2Name: ext.agent2Name||'', agent2Phone: ext.agent2Phone||'',
   };
 }
 
@@ -429,14 +474,18 @@ function cardHTML(p) {
   const cfg=STATUS[p.status]||STATUS['Shortlisted'];
   const sc=p.aiScore>=7?'#2d7a5f':p.aiScore>=5?'#d4831a':'#b83232';
   const tags=[
-    p.hasPool?`<span class="tag" style="background:#dbeafe;color:#1e3a8a">🏊 Pool</span>`:'',
+    p.pool==='Yes'?`<span class="tag" style="background:#dbeafe;color:#1e3a8a">🏊 Pool</span>`:'',
+    p.deck==='Yes'?`<span class="tag" style="background:#d1fae5;color:#065f46">🪵 Deck</span>`:'',
+    p.aircon==='Yes'?`<span class="tag" style="background:#e0f2fe;color:#0369a1">❄️ AC</span>`:'',
+    p.solar==='Yes'?`<span class="tag" style="background:#fef9c3;color:#854d0e">☀️ Solar</span>`:'',
     p.reno&&p.reno!=='None'?`<span class="tag" style="background:#fef3c7;color:#92400e">🔨 ${p.reno}</span>`:'',
   ].filter(Boolean).join('');
   const stats=[
     p.price?`<span class="stat price">${p.price}</span>`:'',
-    (p.beds||p.baths)?`<span class="stat">${[p.beds&&p.beds+'🛏',p.baths&&p.baths+'🚿',p.living&&p.living+' living'].filter(Boolean).join(' · ')}</span>`:'',
+    p.suburb?`<span class="stat">📍 ${p.suburb}</span>`:'',
+    (p.beds||p.baths)?`<span class="stat">${[p.beds&&p.beds+'🛏',p.baths&&p.baths+'🚿',p.parking&&p.parking+'🚘'].filter(Boolean).join(' · ')}</span>`:'',
     p.land?`<span class="stat">📐 ${p.land}</span>`:'',
-    p.garage?`<span class="stat">🚘 ${p.garage}</span>`:'',
+    p.buildingSize?`<span class="stat">🏠 ${p.buildingSize}</span>`:'',
     p.commute?`<span class="stat">⏱ ${p.commute}min</span>`:'',
   ].filter(Boolean).join('');
   const score=p.aiScore?`<div class="score-badge" style="background:${sc}18;border-color:${sc};color:${sc}">${p.aiScore}/10</div>`:`<div style="width:42px"></div>`;
@@ -460,8 +509,11 @@ function cardHTML(p) {
     </div>
     <div class="card-body" id="body-${p.id}" style="display:none">
       <div class="detail-grid">
-        ${p.agentName?`<div class="detail-item"><label>Agent</label><p>${p.agentName}${p.agentAgency?` — ${p.agentAgency}`:''}</p>${p.agentPhone?`<p class="sub">📞 ${p.agentPhone}</p>`:''}${p.agentEmail?`<p class="sub">✉️ ${p.agentEmail}</p>`:''}</div>`:''}
+        ${p.agentAgency?`<div class="detail-item"><label>Agency</label><p>${p.agentAgency}</p></div>`:''}
         ${p.inspection?`<div class="detail-item"><label>Inspection</label><p>${p.inspection}</p></div>`:''}
+        ${p.agent1Name?`<div class="detail-item"><label>Agent 1</label><p>${p.agent1Name}</p>${p.agent1Phone?`<p class="sub">📞 ${p.agent1Phone}</p>`:''}</div>`:''}
+        ${p.agent2Name?`<div class="detail-item"><label>Agent 2</label><p>${p.agent2Name}</p>${p.agent2Phone?`<p class="sub">📞 ${p.agent2Phone}</p>`:''}</div>`:''}
+        ${(p.waterTank||p.solar)?`<div class="detail-item"><label>Sustainability</label><p>${[p.waterTank==='Yes'&&'💧 Water Tank',p.solar==='Yes'&&'☀️ Solar'].filter(Boolean).join(' · ')||'—'}</p></div>`:''}
       </div>
       ${p.notes?`<div><div style="font-size:10px;font-weight:700;color:var(--ink-faint);letter-spacing:0.08em;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:6px">Notes</div><div class="notes-box">${p.notes}</div></div>`:''}
     </div>
@@ -528,8 +580,18 @@ function openForm(id) {
   const p=id?properties.find(x=>x.id===id):null;
   document.getElementById('modal-title').textContent=id?'Edit Property':'Add Property';
   const fields={address:'',url:'',price:'',status:'Shortlisted',beds:'',baths:'',living:'',land:'',commute:'',garage:'',reno:'None',pool:false,'agent-name':'','agent-agency':'','agent-phone':'','agent-email':'',inspection:'',notes:''};
-  if(p) Object.assign(fields,{address:p.address,url:p.url,price:p.price,status:p.status,beds:p.beds,baths:p.baths,living:p.living,land:p.land,commute:p.commute,garage:p.garage,reno:p.reno,pool:p.hasPool,'agent-name':p.agentName,'agent-agency':p.agentAgency,'agent-phone':p.agentPhone,'agent-email':p.agentEmail,inspection:p.inspection,notes:p.notes});
-  Object.keys(fields).forEach(k=>{const el=document.getElementById('f-'+k);if(!el)return;el.type==='checkbox'?(el.checked=fields[k]):(el.value=fields[k]||'');});
+  if(p) Object.assign(fields,{
+    address:p.address, suburb:p.suburb, url:p.url, price:p.price, status:p.status,
+    beds:p.beds, baths:p.baths, parking:p.parking, living:p.living,
+    land:p.land, buildingSize:p.buildingSize, commute:p.commute, reno:p.reno,
+    pool:p.pool||'Unsure', deck:p.deck||'Unsure', aircon:p.aircon||'Unsure',
+    waterTank:p.waterTank||'Unsure', solar:p.solar||'Unsure',
+    'agent-agency':p.agentAgency,
+    'agent1-name':p.agent1Name, 'agent1-phone':p.agent1Phone,
+    'agent2-name':p.agent2Name, 'agent2-phone':p.agent2Phone,
+    inspection:p.inspection, notes:p.notes,
+  });
+  Object.keys(fields).forEach(k=>{const el=document.getElementById('f-'+k);if(!el)return;el.value=fields[k]||'';});
   document.getElementById('modal-overlay').style.display='flex';
 }
 function closeForm(){document.getElementById('modal-overlay').style.display='none';editingId=null;}
@@ -539,16 +601,20 @@ async function saveProperty() {
   if(!address){showToast('⚠️ Please enter an address');return;}
   const btn=document.getElementById('save-btn');
   btn.textContent='Saving...';btn.disabled=true;
+  const gv = id => { const el=document.getElementById(id); return el ? el.value.trim() : ''; };
+  const gs = id => { const el=document.getElementById(id); return el ? el.value : ''; };
   const p={
-    address, url:document.getElementById('f-url').value.trim(), price:document.getElementById('f-price').value.trim(),
-    status:document.getElementById('f-status').value, beds:document.getElementById('f-beds').value,
-    baths:document.getElementById('f-baths').value, living:document.getElementById('f-living').value,
-    land:document.getElementById('f-land').value.trim(), commute:document.getElementById('f-commute').value,
-    garage:document.getElementById('f-garage').value.trim(), reno:document.getElementById('f-reno').value,
-    hasPool:document.getElementById('f-pool').checked,
-    agentName:document.getElementById('f-agent-name').value.trim(), agentAgency:document.getElementById('f-agent-agency').value.trim(),
-    agentPhone:document.getElementById('f-agent-phone').value.trim(), agentEmail:document.getElementById('f-agent-email').value.trim(),
-    inspection:document.getElementById('f-inspection').value.trim(), notes:document.getElementById('f-notes').value.trim(),
+    address, suburb:gv('f-suburb'), url:gv('f-url'), price:gv('f-price'),
+    status:gs('f-status'), beds:gv('f-beds'), baths:gv('f-baths'),
+    parking:gv('f-parking'), living:gv('f-living'),
+    land:gv('f-land'), buildingSize:gv('f-buildingSize'), commute:gv('f-commute'),
+    reno:gs('f-reno'),
+    pool:gs('f-pool'), deck:gs('f-deck'),
+    aircon:gs('f-aircon'), waterTank:gs('f-waterTank'), solar:gs('f-solar'),
+    agentAgency:gv('f-agent-agency'),
+    agent1Name:gv('f-agent1-name'), agent1Phone:gv('f-agent1-phone'),
+    agent2Name:gv('f-agent2-name'), agent2Phone:gv('f-agent2-phone'),
+    inspection:gv('f-inspection'), notes:gv('f-notes'),
   };
   try {
     if(editingId) {
@@ -617,21 +683,44 @@ function showToast(msg) {
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-// Extension listener
-window.addEventListener('message',e=>{
-  if(e.data?.type==='PT_ADD_PROPERTY'){
-    const d=e.data.property; openForm();
-    setTimeout(()=>{
-      ['address','url','price','beds','baths','land','garage'].forEach(k=>{if(d[k])document.getElementById('f-'+k).value=d[k];});
-      if(d['agent-name'])document.getElementById('f-agent-name').value=d['agent-name'];
-      if(d['agent-agency'])document.getElementById('f-agent-agency').value=d['agent-agency'];
-      if(d['agent-phone'])document.getElementById('f-agent-phone').value=d['agent-phone'];
-      showToast('✅ Pre-filled from REA listing');
-    },150);
-  }
-});
+// Pre-fill form from Chrome extension URL params
+function prefillFromExtension() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('from_ext') !== '1') return;
+  let d = {};
+  try { d = JSON.parse(decodeURIComponent(params.get('data') || '{}')); } catch(e) { return; }
+  if (!d.address && !d.url) return;
+  openForm();
+  setTimeout(() => {
+    const sv = (id, val) => { const el=document.getElementById(id); if(el&&val) el.value=val; };
+    sv('f-address',    d.address);
+    sv('f-suburb',     d.suburb);
+    sv('f-url',        d.url);
+    sv('f-price',      d.price);
+    sv('f-beds',       d.beds);
+    sv('f-baths',      d.baths);
+    sv('f-parking',    d.parking);
+    sv('f-land',       d.land);
+    sv('f-buildingSize', d.buildingSize);
+    sv('f-aircon',     d.aircon);
+    sv('f-pool',       d.pool);
+    sv('f-deck',       d.deck);
+    sv('f-waterTank',  d.waterTank);
+    sv('f-solar',      d.solar);
+    sv('f-agent-agency',  d['agent-agency']);
+    sv('f-agent1-name',   d['agent1-name']);
+    sv('f-agent1-phone',  d['agent1-phone']);
+    sv('f-agent2-name',   d['agent2-name']);
+    sv('f-agent2-phone',  d['agent2-phone']);
+    showToast('✅ Pre-filled from REA listing');
+    // Clean URL so refreshing doesn't re-open the form
+    window.history.replaceState({}, '', window.location.pathname);
+  }, 300);
+}
 
-if(sessionStorage.getItem('pt_auth')==='1') loadProperties();
+if(sessionStorage.getItem('pt_auth')==='1') {
+  loadProperties().then(() => prefillFromExtension());
+}
 </script>
 </body>
 </html>
