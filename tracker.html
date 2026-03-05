@@ -690,32 +690,59 @@ function prefillFromExtension() {
   let d = {};
   try { d = JSON.parse(decodeURIComponent(params.get('data') || '{}')); } catch(e) { return; }
   if (!d.address && !d.url) return;
-  openForm();
+
+  // Store data on window so it survives any timing issues
+  window._extPrefillData = d;
+
+  // Clean the URL immediately so refresh doesn't retrigger
+  window.history.replaceState({}, '', window.location.pathname);
+
+  // Wait for DOM to be fully ready before opening form
   setTimeout(() => {
-    const sv = (id, val) => { const el=document.getElementById(id); if(el&&val) el.value=val; };
-    sv('f-address',    d.address);
-    sv('f-suburb',     d.suburb);
-    sv('f-url',        d.url);
-    sv('f-price',      d.price);
-    sv('f-beds',       d.beds);
-    sv('f-baths',      d.baths);
-    sv('f-parking',    d.parking);
-    sv('f-land',       d.land);
-    sv('f-buildingSize', d.buildingSize);
-    sv('f-aircon',     d.aircon);
-    sv('f-pool',       d.pool);
-    sv('f-deck',       d.deck);
-    sv('f-waterTank',  d.waterTank);
-    sv('f-solar',      d.solar);
-    sv('f-agent-agency',  d['agent-agency']);
-    sv('f-agent1-name',   d['agent1-name']);
-    sv('f-agent1-phone',  d['agent1-phone']);
-    sv('f-agent2-name',   d['agent2-name']);
-    sv('f-agent2-phone',  d['agent2-phone']);
+    const data = window._extPrefillData;
+    if (!data) return;
+
+    // Reset form to blank new-property state first
+    editingId = null;
+    document.getElementById('modal-title').textContent = 'Add Property';
+
+    // Clear all fields
+    ['f-address','f-suburb','f-url','f-price','f-beds','f-baths','f-parking',
+     'f-living','f-land','f-buildingSize','f-commute','f-inspection','f-notes',
+     'f-agent-agency','f-agent1-name','f-agent1-phone','f-agent2-name','f-agent2-phone'
+    ].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    ['f-status','f-reno','f-pool','f-deck','f-aircon','f-waterTank','f-solar'].forEach(id => {
+      const el=document.getElementById(id);
+      if(el) el.value = id==='f-status' ? 'Shortlisted' : id==='f-reno' ? 'None' : 'Unsure';
+    });
+
+    // Now fill in scraped values
+    const sv = (id, val) => { const el=document.getElementById(id); if(el && val) el.value=val; };
+    sv('f-address',      data.address);
+    sv('f-suburb',       data.suburb);
+    sv('f-url',          data.url);
+    sv('f-price',        data.price);
+    sv('f-beds',         data.beds);
+    sv('f-baths',        data.baths);
+    sv('f-parking',      data.parking);
+    sv('f-land',         data.land);
+    sv('f-buildingSize', data.buildingSize);
+    sv('f-aircon',       data.aircon);
+    sv('f-pool',         data.pool);
+    sv('f-deck',         data.deck);
+    sv('f-waterTank',    data.waterTank);
+    sv('f-solar',        data.solar);
+    sv('f-agent-agency', data['agent-agency']);
+    sv('f-agent1-name',  data['agent1-name']);
+    sv('f-agent1-phone', data['agent1-phone']);
+    sv('f-agent2-name',  data['agent2-name']);
+    sv('f-agent2-phone', data['agent2-phone']);
+
+    // Show the modal
+    document.getElementById('modal-overlay').style.display = 'flex';
     showToast('✅ Pre-filled from REA listing');
-    // Clean URL so refreshing doesn't re-open the form
-    window.history.replaceState({}, '', window.location.pathname);
-  }, 300);
+    window._extPrefillData = null;
+  }, 600);
 }
 
 if(sessionStorage.getItem('pt_auth')==='1') {
