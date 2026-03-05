@@ -685,11 +685,15 @@ function showToast(msg) {
 
 // Pre-fill form from Chrome extension URL params
 function prefillFromExtension() {
+  console.log('[PT] prefillFromExtension called');
+  console.log('[PT] full URL:', window.location.href);
   const params = new URLSearchParams(window.location.search);
-  if (params.get('from_ext') !== '1') return;
+  console.log('[PT] from_ext param:', params.get('from_ext'));
+  if (params.get('from_ext') !== '1') { console.log('[PT] no from_ext, bailing'); return; }
   let d = {};
-  try { d = JSON.parse(decodeURIComponent(params.get('data') || '{}')); } catch(e) { return; }
-  if (!d.address && !d.url) return;
+  try { d = JSON.parse(decodeURIComponent(params.get('data') || '{}')); } catch(e) { console.log('[PT] parse error', e); return; }
+  console.log('[PT] parsed data:', d);
+  if (!d.address && !d.url) { console.log('[PT] no address or url, bailing'); return; }
 
   // Store data on window so it survives any timing issues
   window._extPrefillData = d;
